@@ -1,0 +1,20 @@
+service: serverless-integration-with-sql-db
+
+plugins:
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: "eu-west-2"
+
+functions:
+  main:
+    handler: dist/main.handler
+    events:
+      - http:
+          method: ANY
+          path: /
+      - http:
+          method: ANY
+          path: '{proxy+}'
