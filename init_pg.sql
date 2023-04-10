@@ -14,3 +14,15 @@ CREATE TABLE IF NOT EXISTS public.cart_items (
     cart_id uuid NOT NULL,
     CONSTRAINT cart_items_fk FOREIGN KEY (cart_id) REFERENCES public.carts(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS public.orders (
+	id uuid NOT NULL,
+	user_id uuid NOT NULL,
+	cart_id uuid NOT NULL,
+	payment json NULL,
+	delivery json NULL,
+	"comments" text NULL,
+	status text NULL,
+	total int NULL,
+	CONSTRAINT orders_fk FOREIGN KEY (cart_id) REFERENCES public.carts(id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
