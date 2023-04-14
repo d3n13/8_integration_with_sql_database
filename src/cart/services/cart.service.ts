@@ -1,30 +1,28 @@
 import { Injectable } from '@nestjs/common';
 
-import { v4 } from 'uuid';
-
 import { Cart } from '../models';
+import { dbConnection } from 'src/db/db.client';
+import { TableName } from 'src/db/db.types';
+import { CartModel, OrderStatus } from 'src/db/models/db.models';
 
 @Injectable()
 export class CartService {
-  private userCarts: Record<string, Cart> = {};
-
-  findByUserId(userId: string): Cart {
-    return this.userCarts[ userId ];
+  findByUserId(userId: string): Promise<CartModel> {
+    return dbConnection(TableName.Carts).select({ user_id: userId });
   }
 
-  createByUserId(userId: string) {
-    const id = v4(v4());
-    const userCart = {
-      id,
-      items: [],
+  createByUserId(userId: string): Promise<CartModel> {
+    const cart: Omit<CartModel, 'id'> = {
+      user_id: userId,
+      status: OrderStatus.OPEN,
+      created_at: new Date().toUTCString(),
+      updated_at: new Date().toUTCString(),
     };
 
-    this.userCarts[ userId ] = userCart;
-
-    return userCart;
+    return dbConnection(TableName.Carts).insert(cart);
   }
 
-  findOrCreateByUserId(userId: string): Cart {
+  findOrCreateByUserId(userId: string): Promise<CartModel> {
     const userCart = this.findByUserId(userId);
 
     if (userCart) {
@@ -34,22 +32,16 @@ export class CartService {
     return this.createByUserId(userId);
   }
 
-  updateByUserId(userId: string, { items }: Cart): Cart {
-    const { id, ...rest } = this.findOrCreateByUserId(userId);
-
-    const updatedCart = {
-      id,
-      ...rest,
-      items: [ ...items ],
-    }
-
-    this.userCarts[ userId ] = { ...updatedCart };
-
-    return { ...updatedCart };
+  async updateByUserId(userId: string, { items }: Cart) {
+    await dbConnection(TableName.CartItems)
+      .del()
+      .where({ user_id: userId });
+    await dbConnection(TableName.CartItems).insert(items);
   }
 
-  removeByUserId(userId): void {
-    this.userCarts[ userId ] = null;
+  removeByUserId(userId) {
+    return dbConnection(TableName.Carts)
+      .del()
+      .where({ user_id: userId });
   }
-
 }
