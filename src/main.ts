@@ -4,6 +4,12 @@ import * as helmet from 'helmet';
 
 import { AppModule } from './app.module';
 
+import { config } from 'dotenv';
+import { up } from './db/db.up';
+
+config();
+up();
+
 const port = process.env.PORT || 4000;
 
 async function bootstrap() {

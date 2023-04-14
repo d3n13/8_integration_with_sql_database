@@ -1,39 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { v4 } from 'uuid';
 
 import { Order } from '../models';
+import { OrderModel } from 'src/db/models/db.models';
+import { dbConnection } from 'src/db/db.client';
+import { TableName } from 'src/db/db.types';
 
 @Injectable()
 export class OrderService {
-  private orders: Record<string, Order> = {};
-
-  findById(orderId: string): Order {
-    return this.orders[orderId];
+  findById(orderId: string): Promise<Order> {
+    return dbConnection(TableName.Orders).first({ user_id: orderId });
   }
 
-  create(data: any) {
-    const id = v4(v4());
-    const order = {
-      ...data,
-      id,
-      status: 'inProgress',
-    };
-
-    this.orders[id] = order;
-
-    return order;
+  create(data: Omit<OrderModel, 'id'>): Promise<OrderModel> {
+    return dbConnection(TableName.Orders).insert(data);
   }
 
   update(orderId, data) {
-    const order = this.findById(orderId);
-
-    if (!order) {
-      throw new Error('Order does not exist.');
-    }
-
-    this.orders[orderId] = {
-      ...data,
-      id: orderId,
-    };
+    return dbConnection(TableName.Orders)
+      .update(data)
+      .where({ user_id: orderId });
   }
 }
